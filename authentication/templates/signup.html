@@ -1,0 +1,54 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Authentication</title>
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=
+    <link rel="stylesheet" href="" />
+  </head>
+  <body>
+    <form
+      method="post"
+      action="/signup/"
+      style="
+        display: flex;
+        flex-direction: column;
+        max-width: 300px;
+        margin: 0 auto;
+      "
+      autocomplete="off"
+    >
+      {% csrf_token %}
+      <label for="id_name">Display Name:</label>
+      <input id="id_displayName" type="text" name="displayName" maxlength="100" required />
+
+      <label for="id_username">Username:</label>
+      <input
+        id="id_username"
+        type="text"
+        name="username"
+        maxlength="100"
+        required
+      />
+
+      <label for="id_password">Password:</label>
+      <input id="id_password" type="password" name="password" required />
+
+      <label for="id_email">Email:</label>
+      <input id="id_email" type="email" name="email" required />
+
+      <label for="id_email">GitHub URL:</label>
+      <input id="id_github" type="url" name="github"/>
+
+      <label for="id_email">Profile Picture URL:</label>
+      <input id="id_profileImage" type="url" name="profileImage"/>
+
+      <label for="id_bio">Bio:</label>
+      <textarea id="id_bio" name="bio"></textarea>
+
+      <input type="submit" value="Sign Up" />
+    </form>
+    <script src="" async defer></script>
+  </body>
+</html>

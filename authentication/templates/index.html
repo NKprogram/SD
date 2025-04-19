@@ -1,0 +1,155 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Authentication</title>
+    <meta name="description" content="" />
+    <!-- <meta name="viewport" content="width=device-width, initial-scale= -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+  </head>
+  <body>
+    {% if user.is_authenticated %}
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h1>Welcome {{ user.username }}</h1>
+      <h4>{{ user.email }}</h4>
+
+      {% if user.is_authenticated and user_profile %}
+        <h4>Followers : {{followers}}</h4>
+        <h4>Following : {{following}}</h4>
+
+        <a href="{% url 'profile' user.username %}">
+          <img 
+              height="100"
+              style="border-radius: 50%;"
+              width="100"
+              src="{{ user_profile.profileImage }}" alt="Profile Picture">
+      </a>
+      {% endif %}
+      <div>
+        <button type="submit"><a href="/signout"> Sign Out</a></button>
+      </div>
+    </div>
+
+    <div style="border: 10px; border-color: black; border-style: solid; padding: 10px; margin: 10px;">
+      <form method="post" enctype="multipart/form-data" action="{% url 'create_post' %}">
+        {% csrf_token %}
+        <div style="display: flex; flex-direction: column; justify-content: space-between; align-items: center;">
+          <select name="visibility">
+            <option value="public">Public</option>
+            <option value="private">Private</option>
+            <option value="unlisted">Unlisted</option>
+          </select>
+          <textarea name="content" placeholder="What's on your mind?" style="margin: 10px; padding: 10px;"></textarea>
+          <input type="file" name="image" style="margin: 10px;">
+          <input type="checkbox" name="cm_toggle"> Use CommonMark
+          <button type="submit" style="margin: 10px;">Post</button>
+        </div>
+      </form>
+    </div>
+
+
+    <form method="get" action="{% url 'user_search' %}">
+      <input type="text" name="q" placeholder="Search users...">
+      <button type="submit">Search</button>
+      <a href="{% url 'all_users' %}"><button type="button">All Users</button></a>
+    </form>
+
+    <h2>Posts - {{posts_length}}</h2>
+    {% for post in posts %}
+      {% if post.visibility == 'public' or post.user.profile.id in friend_ids or request.user.id == post.user.profile.id %}
+        <div style="border: 10px; border-color: black; border-style: solid; padding: 10px; margin: 10px;">
+          <div style="display: flex; flex-direction: column; justify-content: space-between; align-items: center;">
+            <div>Content : {{ post.content|safe }}</div>
+            {% if post.image %}  <!-- if there is an image display it -->
+              <h3>Image : <img height="100" width="100" src="data:{{ post.image_type }};base64,{{ post.image }}" alt="Post Image"/> </h3>
+            {% endif %}
+            <h3>By : {{post.profile.displayname}} (/{{post.user.username}})</h3>
+            <h3>Created At : {{post.created}}</h3>
+            <a href="{% url 'profile' post.user.username %}">
+              <img height="40" width="40" style="border-radius: 50%;"
+                  src="{{post.profile.pfp}}" alt="Profile Picture"/>
+            </a>
+            <!-- <h3>Like : {{post.liked}}</h3> -->
+            <a href="{% url 'like_post' post.id %}" class="like-button" data-post-id="{{ post.id }}">
+              {% if request.user in post.likes.all %}
+                <i class="fas fa-heart"></i> <!-- filled heart icon -->
+              {% else %}
+                <i class="far fa-heart"></i> <!-- empty heart icon -->
+
+              {% endif %}
+            <h3>By : {{post.profile.displayname}} (/{{post.user.username}})</h3>
+            <h3>Created At : {{post.created}}</h3>
+            <a href="{% url 'profile' post.user.username %}">
+              <img height="40" width="40" style="border-radius: 50%;"
+                  src="{{post.profile.profileImage}}" alt="Profile Picture"/>
+            </a>
+            <!-- <h3>Like : {{post.liked}}</h3> -->
+            <a href="{% url 'like_post' post.id %}" class="like-button" data-post-id="{{ post.id }}">
+              {% if request.user in post.likes.all %}
+                <i class="fas fa-heart"></i> <!-- filled heart icon -->
+              {% else %}
+                <i class="far fa-heart"></i> <!-- empty heart icon -->
+              {% endif %}
+              <h3>By : {{post.profile.displayname}} (/{{post.user.username}})</h3>
+              <h3>Created At : {{post.created}}</h3>
+              <a href="{% url 'profile' post.user.username %}">
+                <img height="40" width="40" style="border-radius: 50%;"
+                    src="{{post.profile.pfp}}" alt="Profile Picture"/>
+              </a>
+              <!-- <h3>Like : {{post.liked}}</h3> -->
+              <a href="{% url 'like_post' post.id %}" class="like-button" data-post-id="{{ post.id }}">
+                {% if request.user in post.likes.all %}
+                  <i class="fas fa-heart"></i> <!-- filled heart icon -->
+                {% else %}
+                  <i class="far fa-heart"></i> <!-- empty heart icon -->
+                {% endif %}
+              </a>
+              <span id="like-count-{{ post.id }}">{{ post.likes.count }}</span> <!-- like count -->
+              <a href="{% url 'post_detail' post.id %}">Comments ({{ post.comment_set.count }})</a>
+              {% if user.id == post.user.id %}  <!-- if the current user is the author of the post -->
+                <a href="{% url 'delete_post' post.id %}">Delete</a>
+                <a href="{% url 'edit_post' post.id %}">Edit</a>
+              {% endif %}
+            </div>
+          </div>
+      {% endif %}
+    {% endfor %}
+
+
+    {% else %}
+    <h3>Welcome to main page</h3>
+    <button type="submit"><a href="/signup"> SignUp</a></button>
+    <button type="submit"><a href="/signin"> SignIn</a></button>
+    {% endif %} 
+
+    {% for message in messages %}
+    <h5>Message : {{message}}</h5>
+    {% endfor %}
+    <script src="" async defer></script>
+  </body>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script>
+  $(document).ready(function() {
+    $('.like-button').click(function(event) {
+        event.preventDefault();
+        var post_id = $(this).data('post-id');
+        var url = "{% url 'like_post' '123' %}".replace('123', post_id);
+        var icon = $(this).find('i');
+        $.ajax({
+            url: url,
+            dataType: 'json',
+            success: function(data) {
+                $('#like-count-' + post_id).text(data.like_count);
+                if (data.user_likes) {
+                    icon.removeClass('far').addClass('fas');
+                } else {
+                    icon.removeClass('fas').addClass('far');
+                }
+            }
+        });
+    });
+});
+  </script>
+
+</html>

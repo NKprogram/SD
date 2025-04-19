@@ -1,0 +1,163 @@
+{% load static %}
+{% load static my_filters %}
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+<style>
+    .emoji-in-post {
+        width: 35px;
+        height: 35px;
+    }
+</style>
+<div>
+    {% if post.cm_toggle %}
+        <!-- Apply the emoji conversion filter if Markdown is enabled for the post -->
+        {% autoescape off %}
+            {{ post.content|safe|replace_from_dict:cm_emojis }}
+        {% endautoescape %}
+    {% else %}
+        <!-- Just render the post content safely if Markdown isn't enabled -->
+        {{ post.content|safe }}
+    {% endif %}
+</div>
+<p>Posted by {{ post.user.username }} on {{ post.created }}</p>
+<p>Type: {{ post.get_visibility_display }}</p> <!-- Display post visibility -->
+{% if post.image %}
+    <img src="{{ post.image }}" alt="Post Image" style="width: auto; height: 200px;">
+{% endif %}
+<!-- Like button -->
+<a href="{% url 'like_post' post.id %}" class="like-button" data-post-id="{{ post.id }}">
+  {% if request.user in post.likes.all %}
+    <i class="fas fa-heart"></i> <!-- filled heart icon -->
+  {% else %}
+    <i class="far fa-heart"></i> <!-- empty heart icon -->
+  {% endif %}
+</a>
+<span id="like-count-{{ post.id }}">{{ post.likes.count }}</span> <!-- like count -->
+
+<!-- Display other post details here -->
+
+<h2>Comments</h2>
+<form method="post" action="{% url 'add_comment' post.id %}">
+    {% csrf_token %}
+    <textarea name="content"></textarea>
+    <input type="checkbox" name="cm_toggle_comment"> Use CommonMark 
+    <div id="emoji-picker-comment" style="display: none;">
+    <img src="{% static 'cm-emojis/angry.png' %}" alt=":angry: " title="angry" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/bicycle.png' %}" alt=":bicycle: " title="bicycle" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/chef.png' %}" alt=":chef: " title="chef" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/deaf.png' %}" alt=":deaf: " title="deaf" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/depression.png' %}" alt=":depression: " title="depression" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/devious.png' %}" alt=":devious: " title="devious" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/disgust.png' %}" alt=":disgust: " title="disgust" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/fight.png' %}" alt=":fight: " title="fight" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/funny.png' %}" alt=":funny: " title="funny" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/goodbye.png' %}" alt=":goodbye: " title="goodbye" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/jojothinking.png' %}" alt=":jojothinking: " title="jojothinking" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/looking.png' %}" alt=":looking: " title="looking" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/love.png' %}" alt=":love: " title="love" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/mischievous.png' %}" alt=":mischievous: " title="mischievous" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/nerd.png' %}" alt=":nerd: " title="nerd" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/pet.gif' %}" alt=":pet: " title="pet" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/pray.png' %}" alt=":pray: " title="pray" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/sad.png' %}" alt=":sad: " title="sad" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/shrug.png' %}" alt=":shrug: " title="shrug" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/stare.png' %}" alt=":stare: " title="stare" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/sunglasses.gif' %}" alt=":sunglasses: " title="sunglasses" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/swag.png' %}" alt=":swag: " title="swag" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/waiting.png' %}" alt=":waiting: " title="waiting" class="emoji emoji-in-post">
+    <img src="{% static 'cm-emojis/walk.gif' %}" alt=":walk: " title="walk" class="emoji emoji-in-post">
+</div>
+    <button type="submit">Add Comment</button>
+</form>
+
+{% for comment in comments %}
+    <div>
+        <h3>{{ comment.user.username }} commented on {{ comment.created }}</h3>
+        <p>
+            {% if comment.cm_toggle_comment %}
+                {% autoescape off %}
+                    {{ comment.content|safe|replace_from_dict:cm_emojis }}
+                {% endautoescape %}
+            {% else %}
+                {{ comment.content|safe }}
+            {% endif %}
+        </p>
+        <!-- Like button for the comment -->
+        <a href="javascript:void(0);" class="like-comment-button" data-comment-id="{{ comment.id }}">
+          {% if request.user in comment.likes.all %}
+            <i class="fas fa-heart"></i>
+          {% else %}
+            <i class="far fa-heart"></i>
+          {% endif %}
+        </a>
+        <span id="like-comment-count-{{ comment.id }}">{{ comment.likes.count }}</span>
+        {% if request.user == comment.user %}
+            <form method="post" action="{% url 'delete_comment' comment.id %}">
+                {% csrf_token %}
+                <button type="submit">Delete Comment</button>
+            </form>
+        {% endif %}
+    </div>
+{% endfor %}
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+$(document).ready(function() {
+  $('.like-button').click(function(event) {
+      event.preventDefault();
+      var post_id = $(this).data('post-id');
+      var url = "{% url 'like_post' '123' %}".replace('123', post_id);
+      var icon = $(this).find('i');
+      $.ajax({
+          url: url,
+          dataType: 'json',
+          success: function(data) {
+              $('#like-count-' + post_id).text(data.like_count);
+              if (data.user_likes) {
+                  icon.removeClass('far').addClass('fas');
+              } else {
+                  icon.removeClass('fas').addClass('far');
+              }
+          }
+      });
+  });
+});
+
+$(document).ready(function() {
+  $('.like-comment-button').click(function(event) {
+      event.preventDefault();
+      var commentId = $(this).data('comment-id');
+      var url = "{% url 'like_comment' '123' %}".replace('123', commentId); // Update this URL
+      var icon = $(this).find('i');
+      $.ajax({
+          url: url,
+          method: 'POST', // Ensure you use POST method
+          data: {
+              'csrfmiddlewaretoken': '{{ csrf_token }}', // Pass the CSRF token
+              'comment_id': commentId,
+          },
+          success: function(response) {
+              // Update the like count and icon based on response
+              $('#like-comment-count-' + commentId).text(response.likes_count);
+              if (response.liked) {
+                  icon.removeClass('far').addClass('fas');
+              } else {
+                  icon.removeClass('fas').addClass('far');
+              }
+          }
+      });
+  });
+});
+
+document.querySelector('input[name="cm_toggle_comment"]').addEventListener('change', function() {
+    document.getElementById('emoji-picker-comment').style.display = this.checked ? 'block' : 'none';
+});
+
+document.querySelectorAll('#emoji-picker-comment .emoji').forEach(function(emoji) {
+    emoji.addEventListener('click', function() {
+        document.querySelector('textarea[name="content"]').value += this.alt;
+    });
+});
+
+
+</script>

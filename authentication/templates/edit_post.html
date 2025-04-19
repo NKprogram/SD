@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Post</title>
+    <style>
+        .form-container {
+            border: 10px solid black; /* Adjusted for proper CSS */
+            padding: 10px;
+            margin: 10px;
+        }
+        .form-content {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+        }
+        textarea, input, button {
+            margin: 10px;
+            padding: 10px;
+        }
+        input, button {
+            padding: 5px; /* Adjusted for better appearance */
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-content">
+                <textarea name="content" placeholder="change your mind here :3">{{ post.content_markdown }}</textarea>
+                <input type="file" name="image">
+                <input type="checkbox" name="cm_toggle" {% if post.cm_toggle %}checked{% endif %}> Use CommonMark
+                <button type="submit">Save changes</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

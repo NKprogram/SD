@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Page</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+    {% if all_users %}
+        {% for user in all_users %}
+            {% if user.user__username %}
+                <div style="border: 10px; border-color: black; border-style: solid; padding: 10px; margin: 10px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3>Username : {{user.user__username}}</h3>
+                    {% if user.is_remote %}
+                        <a href="{% url 'profile' user.user__database_id %}">
+                    {% else %}
+                        <a href="{% url 'profile' user.user__username %}">
+                    {% endif %}
+                    <img height="40" width="40" style="border-radius: 50%;"
+                        src="{{user.profileImage}}" alt="Profile Picture"/>
+                    </a>
+                    <form method="post" action="{% url 'follow' %}">
+                    {% csrf_token %}
+                    <script>
+                        $(document).ready(function(){
+                            $(".followButton").off('click').click(function(e){
+                                e.preventDefault();  // Prevent form submission
+                                var userId = $(this).data('user-id');
+                                var button = $(this);  // Reference to the clicked button
+                                $.ajax({
+                                    type: "POST",  // Change to POST request
+                                    url: "{% url 'follow' %}",
+                                    data: {
+                                        'user_id': userId,
+                                        'csrfmiddlewaretoken': $('input[name=csrfmiddlewaretoken]').val()  // Include CSRF token
+                                    },
+                                    dataType: 'json',
+                                    success: function (data) {
+                                        console.log(data);
+                                        if(data.is_followed) {
+                                            button.text('Unfollow');
+                                        } else {
+                                            button.text('Follow');
+                                        }
+                                    }
+                                });
+                            });
+                        });                
+                    </script>
+                    <button class="followButton" data-user-id="{{ user.user.id }}">
+                        {% if user.user__id in following_ids %}
+                            Unfollow
+                        {% else %}
+                            Follow
+                        {% endif %}
+                    </button>
+                    </form>
+                </div>
+                </div>
+            {% endif %}
+    {% endfor %}
+            <!-- Pagination links -->
+            <div class="pagination">
+                <span class="step-links">
+                    {% if page_obj.has_previous %}
+                        <a href="?page=1">&laquo; first</a>
+                        <a href="?page={{ page_obj.previous_page_number }}">previous</a>
+                    {% endif %}
+        
+                    <span class="current">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}.
+                    </span>
+        
+                    {% if page_obj.has_next %}
+                        <a href="?page={{ page_obj.next_page_number }}">next</a>
+                        <a href="?page={{ page_obj.paginator.num_pages }}">last &raquo;</a>
+                    {% endif %}
+                </span>
+            </div>
+    {% else %}
+        <p>No users found.</p>
+    {% endif %}
+</body>
+</html>

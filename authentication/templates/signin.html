@@ -1,0 +1,40 @@
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>Authentication</title>
+    <meta name="description" content="" />
+    <meta name="viewport" content="width=device-width, initial-scale=
+    <link rel="stylesheet" href="" />
+  </head>
+  <body>
+    <form
+      method="post"
+      action="/signin/"
+      style="
+        display: flex;
+        flex-direction: column;
+        max-width: 300px;
+        margin: 0 auto;
+      "
+      autocomplete="off"
+    >
+      {% csrf_token %}
+
+      <label for="id_username">Username:</label>
+      <input
+        id="id_username"
+        type="text"
+        name="username"
+        maxlength="100"
+        required
+      />
+
+      <label for="id_password">Password:</label>
+      <input id="id_password" type="password" name="password" required />
+
+      <input type="submit" value="Sign In" />
+    </form>
+    <script src="" async defer></script>
+  </body>
+</html>

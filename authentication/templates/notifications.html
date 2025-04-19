@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications</title>
+    <!-- Including jQuery for AJAX -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+<div class="container">
+    {% if user.is_authenticated %}
+    <div class="notifications">
+        <h1>Notifications</h1>
+        <ul>
+            {% for notification in notifications %}
+            <!-- Added a data attribute for notification ID -->
+            <li data-notification-id="{{ notification.id }}" class="notification-item {{ notification.type }}">
+                {% if notification.type == 'like' %}
+                <strong>{{ notification.sender.username }}</strong> liked your post: "{{ notification.post.content|truncatechars:50 }}"
+                {% elif notification.type == 'comment' %}
+                <strong>{{ notification.sender.username }}</strong> commented on your post: "{{ notification.post.content|truncatechars:50 }}"
+                {% elif notification.type == 'follow' %}
+                <strong>{{ notification.sender.username }}</strong> started following you
+                {% elif notification.type == 'post' %}
+                <strong>{{ notification.sender.username }}</strong> created a new post: "{{ notification.post.content|truncatechars:50 }}" 
+                {% endif %}
+                <!-- Add this inside your notifications loop -->
+{% if notification.type == 'follow' %}
+<strong>{{ notification.sender.username }}</strong> has requested to follow you.
+<button class="acceptFollowRequest" data-notification-id="{{ notification.id }}">Accept</button>
+<button class="denyFollowRequest" data-notification-id="{{ notification.id }}">Deny</button>
+{% endif %}
+                <span class="notification-date">{{ notification.created|date:"N d, Y H:i" }}</span>
+            </li>
+            {% empty %}
+            <li>No notifications yet.</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% else %}
+    <p>You must be logged in to view notifications.</p>
+    {% endif %}
+</div>
+
+<script>
+    $(document).ready(function() {
+        // Automatically mark all notifications as read when the page loads
+        $.ajax({
+            url: '/notifications/mark-all-as-read/',
+            method: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    console.log("All notifications marked as read.");
+                    // Optionally, you can also clear the notifications display here, if desired.
+                }
+            }
+        });
+
+        $('.acceptFollowRequest').on('click', function() {
+        var notificationId = $(this).data('notification-id');
+        $.post({
+            url: '/path/to/accept/follow/request/',
+            data: {
+                notification_id: notificationId,
+                csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+            },
+            success: function() {
+                window.location.reload();
+            }
+        });
+    });
+
+    $('.denyFollowRequest').on('click', function() {
+        var notificationId = $(this).data('notification-id');
+        $.post({
+            url: '/path/to/deny/follow/request/',
+            data: {
+                notification_id: notificationId,
+                csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val()
+            },
+            success: function() {
+                window.location.reload();
+            }
+        });
+    });
+    });
+    
+</script>
+
+</body>
+</html>

@@ -1,0 +1,257 @@
+{% load my_filters %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Profile Page</title>
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        h1, h2, h4, p {
+            text-align: center;
+        }
+        img {
+            display: block;
+            margin: 10px auto;
+            border-radius: 50%;
+        }
+        form {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            max-width: 400px;
+            margin: 20px auto;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        input[type="text"],
+        input[type="email"],
+        input[type="url"],
+        textarea {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        input[type="submit"] {
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        input[type="submit"]:hover {
+            background-color: #45a049;
+        }
+        .friend-item, .post-item {
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        a {
+            color: #007BFF;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        img {
+            display: block;
+            margin: 10px auto;
+            border-radius: 50%;
+            max-width: 100px; /* Maximum width for profile pictures */
+            max-height: 100px; /* Maximum height for profile pictures */
+        }
+        .post-item img, .friend-item img {
+            max-width: 200px; /* Maximum width for post and friend images */
+            max-height: 200px; /* Maximum height for post and friend images */
+        }
+        .emoji-in-post {
+        width: 35px;
+        height: 35px;
+        display: inline-block; /* Change this from block to inline-block */
+        }
+        
+
+    </style>
+</head>
+<body>
+
+    {% if not is_remote %}
+        <h1>{{ profile.displayName }} (/{{ username }})'s Profile</h1>
+            
+        <img 
+            height="100"
+            width="100"
+            src="{{ profileImage }}" alt="Profile Picture"
+            style="border-radius: 50%;"
+        >
+
+        <h4>Followers: {{ followers }} - Following: {{ following }}</h4>
+
+        {% if user.id == profile.user.id %}  <!-- you view your own profile -->
+            <form action="{% url 'update_profile' %}" method="post">
+                {% csrf_token %}
+                <label for="displayName">Display Name:</label><br>
+                <input type="text" id="displayName" name="displayName" value="{{ profile.displayName }}" required><br>
+
+                <label for="email">Email:</label><br>
+                <input type="email" id="email" name="email" value="{{ email }}" required><br>
+
+                <label for="bio">Bio:</label><br>
+                <textarea id="bio" name="bio">{{ bio }}</textarea><br>
+
+                <label for="github">GitHub URL:</label><br>
+                <input type="url" id="github" name="github" value="{{ github }}"><br>
+
+                <label for="profileImage">Profile Picture URL:</label><br>
+                <input type="url" id="profileImage" name="profileImage" value="{{ profileImage }}"><br>
+
+                <input type="submit" value="Update Profile">
+            </form>
+        {% endif %}
+        <!-- Friends List -->
+        {% if friends_length > 0 %}
+            <h2>Friends - {{ friends_length }}</h2>
+            {% for friend in friends %}
+                <div class="friend-item">
+                    <h3>{{friend.user.profile.displayName}} (/{{friend.user.username}})</h3>
+                    <img 
+                        height="50"
+                        width="50"
+                        src="{{ friend.profileImage }}" alt="Friend Profile Picture"
+                        style="border-radius: 50%;"
+                    >
+                </div>
+            {% endfor %}
+        {% else %}
+            <h2>No friends yet</h2>
+        {% endif %}
+        <!-- Posts List -->
+        {% if posts_length > 0 %}
+        <h2>Posts - {{ posts_length }}</h2>
+        {% for post in posts %}
+                {% if post.visibility == 'public' %}
+                    <div class="post-item">
+                        <div>Content : 
+                            {% if post.cm_toggle %}
+                                {% autoescape off %}
+                                    {{ post.content|safe|replace_from_dict:cm_emojis }}
+                                {% endautoescape %}
+                            {% else %}
+                                {{ post.content|safe }}
+                            {% endif %}
+                        </div>
+                        {% if post.image %}
+                            <img src="{{ post.image }}" alt="Post Image">
+                        {% endif %}
+                    </div>
+                {% elif post.visibility == 'private' %}
+                    {% if request.user.id in friend_ids or request.user.id == post.user.profile.id %}
+                        <div class="post-item">
+                            <div>Content : 
+                                {% if post.cm_toggle %}
+                                    {% autoescape off %}
+                                        {{ post.content|safe|replace_from_dict:cm_emojis }}
+                                    {% endautoescape %}
+                                {% else %}
+                                    {{ post.content|safe }}
+                                {% endif %}
+                            </div>
+                            {% if post.image %}
+                                <img src="{{ post.image }}" alt="Post Image">
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% elif post.visibility == 'unlisted' %}
+                    {% if request.user.id == post.user.id %}
+                        <div class="post-item">
+                            <div>Content : 
+                                {% if post.cm_toggle %}
+                                    {% autoescape off %}
+                                        {{ post.content|safe|replace_from_dict:cm_emojis }}
+                                    {% endautoescape %}
+                                {% else %}
+                                    {{ post.content|safe }}
+                                {% endif %}
+                            </div>
+                            {% if post.image %}
+                                <img src="{{ post.image }}" alt="Post Image">
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        {% else %}
+        <h2>No posts yet</h2>
+        {% endif %}
+    {% else %}
+    <!-- REMOTE PROFILE -->
+        <h1>{{ profile.displayName }}'s Profile</h1>
+        <img 
+            height="100"
+            width="100"
+            src="{{ profile.profileImage }}" alt="Profile Picture"
+            style="border-radius: 50%;"
+        >
+        <h4>Followers: {{ followers }} - Following: {{ following }}</h4>
+                <!-- Friends List -->
+                {% if friends_length > 0 %}
+                <h2>Friends - {{ friends_length }}</h2>
+                {% for friend in friends %}
+                    <div class="friend-item">
+                        <h3>{{friend.user.profile.displayName}} (/{{friend.user.username}})</h3>
+                        <img 
+                            height="50"
+                            width="50"
+                            src="{{ friend.profileImage }}" alt="Friend Profile Picture"
+                            style="border-radius: 50%;"
+                        >
+                    </div>
+                {% endfor %}
+            {% else %}
+                <h2>No friends yet</h2>
+            {% endif %}
+            <!-- Posts List -->
+            {% if posts_length > 0 %}
+            <h2>Posts - {{ posts_length }}</h2>
+            {% for post in posts %}
+                    
+                        <div class="post-item">
+                            <div>Content : 
+                                {% if post.cm_toggle %}
+                                    {% autoescape off %}
+                                        {{ post.content|safe|replace_from_dict:cm_emojis }}
+                                    {% endautoescape %}
+                                {% else %}
+                                    {{ post.content|safe }}
+                                {% endif %}
+                            </div>
+                            {% if post.image %}
+                                <img src="{{ post.image }}" alt="Post Image">
+                            {% endif %}
+                        </div>
+                   
+                {% endfor %}
+            {% else %}
+            <h2>No posts yet</h2>
+            {% endif %}
+        
+    {% endif %}
+</body>
